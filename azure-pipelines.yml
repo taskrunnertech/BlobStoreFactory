@@ -1,0 +1,52 @@
+
+name: $(majorMinorVersion).$(semanticVersion) # $(rev:r) # NOTE: rev resets when the default retention period expires
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  majorMinorVersion: 1.0
+  semanticVersion: $[counter(variables['majorMinorVersion'], 0)]
+  buildConfiguration: 'Release'
+  ProjectName: 'KarmaStore'
+
+trigger:
+- master
+
+steps:
+
+- task: NuGetToolInstaller@1
+
+# Restore
+- task: DotNetCoreCLI@2
+  displayName: 'Restore'
+  inputs:
+    command: 'restore'
+    feedsToUse: 'select'
+    # feedsToUse: 'config'
+    # nugetConfigPath: '$(System.DefaultWorkingDirectory)/NuGet.Config'
+
+# Build
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    projects: '**/*.csproj'
+    arguments: '--configuration $(BuildConfiguration)'
+
+# Package
+- task: DotNetCoreCLI@2
+  displayName: 'NuGet pack'
+  inputs:
+    command: 'pack'
+    configuration: $(BuildConfiguration)
+    packagesToPack: '**/$(ProjectName).csproj'
+    packDirectory: '$(build.artifactStagingDirectory)'
+    versioningScheme: byBuildNumber 
+
+# Push
+- task: DotNetCoreCLI@2
+  displayName: 'NuGet push'
+  inputs:
+    command: push
+    nuGetFeedType: 'internal'
+    packagesToPush: '$(build.artifactStagingDirectory)/$(ProjectName)*.nupkg'
+    publishVstsFeed: 'karma'
