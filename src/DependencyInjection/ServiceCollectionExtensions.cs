@@ -7,24 +7,30 @@ namespace BlobStoreFactory
 {
     public static class ServiceCollectionExtensions
     {
+        public static IServiceCollection AddBlobStorage<TClient>(this IServiceCollection services, IConfigurationSection config)
+          where TClient : class
+        {
+            var storeConf = new StoreConf();
+            config.Bind(storeConf);
+
+            return services.AddBlobStorage<TClient>(storeConf);
+        }
+
         public static IServiceCollection AddBlobStorage<TClient, TImplementation>(this IServiceCollection services, IConfigurationSection config)
           where TClient : class
           where TImplementation : class, TClient
         {
+            services.AddScoped<TClient, TImplementation>();
 
             var storeConf = new StoreConf();
             config.Bind(storeConf);
 
-            return services.AddBlobStorage<TClient, TImplementation>(storeConf);
+            return services.AddBlobStorage<TClient>(storeConf);
         }
 
-        public static IServiceCollection AddBlobStorage<TClient, TImplementation>(this IServiceCollection services, StoreConf storeConf)
+        public static IServiceCollection AddBlobStorage<TClient>(this IServiceCollection services, StoreConf storeConf)
           where TClient : class
-          where TImplementation : class, TClient
         {
-
-            services.AddScoped<TClient, TImplementation>();
-
 
             services.AddSingleton(s => new AccountFactory<TClient>(storeConf));
             services.AddSingleton(s => new BlobFactory<TClient>(s.GetService<AccountFactory<TClient>>().Value));
