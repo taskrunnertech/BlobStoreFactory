@@ -6,6 +6,10 @@ Blob Storage Helper
 services.AddBlobStorage<IService, Service>(ConfigurationSection1);
 services.AddBlobStorage<IService2, Service2>(ConfigurationSection2);
 
+# or 
+
+services.AddBlobStorage<IService>(ConfigurationSection1); 
+
 ```
 
 ```
